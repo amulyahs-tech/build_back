@@ -11,12 +11,11 @@
 
 ---
 
-## 🚀 Live Demo
+## 🚀 Live Demo & Deployment
 
-* **Public Streamlit Demo:** [Open REBUILD AI](YOUR_STREAMLIT_URL)
+* **Streamlit App Entrypoint:** `streamlit/app.py`
 * **GitHub Repository:** [https://github.com/amulyahs-tech/build_back](https://github.com/amulyahs-tech/build_back)
-
-*(Replace `YOUR_STREAMLIT_URL` and `YOUR_GITHUB_REPOSITORY_URL` with your published links upon deployment).*
+* **Deploy on Streamlit Community Cloud:** Set **Main file path** to `streamlit/app.py` on [share.streamlit.io](https://share.streamlit.io/).
 
 ---
 
