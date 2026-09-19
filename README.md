@@ -14,7 +14,7 @@
 ## 🚀 Live Demo
 
 * **Public Streamlit Demo:** [Open REBUILD AI](YOUR_STREAMLIT_URL)
-* **GitHub Repository:** [YOUR_GITHUB_REPOSITORY_URL](YOUR_GITHUB_REPOSITORY_URL)
+* **GitHub Repository:** [https://github.com/amulyahs-tech/build_back](https://github.com/amulyahs-tech/build_back)
 
 *(Replace `YOUR_STREAMLIT_URL` and `YOUR_GITHUB_REPOSITORY_URL` with your published links upon deployment).*
 
