@@ -14,34 +14,34 @@ const MATERIAL_OPTIONS = [
   "Granite", "Ceramic Materials", "Mixed Construction Waste", "Other / Debris"
 ];
 
-export default function CreateListingWizard({ onNavigate }) {
+export default function CreateListingWizard({ onNavigate, initialData = null }) {
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialData?.valuationData ? 3 : 1);
   const [cameraModalOpen, setCameraModalOpen] = useState(false);
 
   // Form State
-  const [photoDataUrl, setPhotoDataUrl] = useState(null);
+  const [photoDataUrl, setPhotoDataUrl] = useState(initialData?.photoDataUrl || null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
 
   // AI Classification State
-  const [classification, setClassification] = useState(null);
-  const [selectedMaterial, setSelectedMaterial] = useState('');
+  const [classification, setClassification] = useState(initialData?.classification || null);
+  const [selectedMaterial, setSelectedMaterial] = useState(initialData?.material_name || '');
   const [correctionMade, setCorrectionMade] = useState(false);
 
   // Quality Assessment State
   const [ageYears, setAgeYears] = useState(1.5);
   const [damagePct, setDamagePct] = useState(8.0);
   const [originalUsage, setOriginalUsage] = useState('Commercial Demolition Salvage');
-  const [qualityData, setQualityData] = useState(null);
+  const [qualityData, setQualityData] = useState(initialData?.qualityData || null);
 
   // Quantity & Units
-  const [quantity, setQuantity] = useState(1000);
-  const [unit, setUnit] = useState('Pieces');
+  const [quantity, setQuantity] = useState(initialData?.quantity || 1000);
+  const [unit, setUnit] = useState(initialData?.unit || 'Pieces');
 
   // Valuation
-  const [valuationData, setValuationData] = useState(null);
-  const [sellingPrice, setSellingPrice] = useState('');
+  const [valuationData, setValuationData] = useState(initialData?.valuationData || null);
+  const [sellingPrice, setSellingPrice] = useState(initialData?.valuationData?.estimated_price || '');
 
   // Location & Details
   const [city, setCity] = useState(user?.city || 'Bangalore');

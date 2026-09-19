@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REBUILD AI — Construction Waste Reuse & Second-Market Platform</title>
+  <title>BuildBack — AI Construction Waste Reuse & Second-Market Platform</title>
   <meta name="description" content="AI platform for construction material identification, quality grading, price prediction, and circular LCA calculations.">
   <link rel="icon" type="image/svg+xml" href="https://img.icons8.com/color/96/recycle-sign.png">
 
@@ -203,12 +203,30 @@
     // Main App Root Component
     // ==========================================
     function App() {
-      const [route, setRoute] = useState('landing');
+      const [route, setRoute] = useState(() => {
+        const p = window.location.pathname.replace(/^\/+|\/+$/g, '');
+        if (p === 'assessment') return 'assessment';
+        if (p === 'marketplace') return 'marketplace';
+        if (p === 'sell' || p === 'wizard') return 'sell';
+        if (p === 'buy') return 'buy';
+        if (p === 'profile') return 'profile';
+        if (p === 'login') return 'login';
+        if (p === 'register') return 'register';
+        if (p === 'evaluation') return 'evaluation';
+        return 'landing';
+      });
       const [user, setUser] = useState(null);
       const [selectedListingId, setSelectedListingId] = useState(null);
+      const [prefillData, setPrefillData] = useState(null);
 
       useEffect(() => {
         checkAuth();
+        const handlePop = () => {
+          const p = window.location.pathname.replace(/^\/+|\/+$/g, '');
+          setRoute(p || 'landing');
+        };
+        window.addEventListener('popstate', handlePop);
+        return () => window.removeEventListener('popstate', handlePop);
       }, []);
 
       const checkAuth = async () => {
@@ -223,84 +241,129 @@
         }
       };
 
+      const handleNavigate = (newRoute) => {
+        setRoute(newRoute);
+        const url = newRoute === 'landing' ? '/' : `/${newRoute}`;
+        if (window.location.pathname !== url) {
+          window.history.pushState({}, '', url);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
       const handleLogout = () => {
         API.clearToken();
         setUser(null);
-        setRoute('landing');
+        handleNavigate('landing');
       };
 
       return (
-        <div className="min-h-screen flex flex-col">
-          {/* Navigation Bar */}
-          <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200">
+        <div className="min-h-screen flex flex-col font-sans">
+          {/* BUILD BACK Common Navigation Bar */}
+          <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setRoute('landing')}>
+              {/* Brand Logo */}
+              <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => handleNavigate('landing')}>
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white text-xl font-black shadow-md shadow-emerald-600/20">
                   ♻
                 </div>
                 <div>
-                  <span className="font-extrabold text-xl text-gray-900 tracking-tight">REBUILD <span className="text-emerald-600">AI</span></span>
-                  <span className="block text-[10px] uppercase font-bold text-emerald-700 tracking-widest">Circular Construction</span>
+                  <span className="font-extrabold text-xl text-gray-900 tracking-tight">BUILD<span className="text-emerald-600">BACK</span></span>
+                  <span className="block text-[10px] uppercase font-bold text-emerald-700 tracking-widest">AI Circular Waste Platform</span>
                 </div>
               </div>
 
-              <div className="hidden md:flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <button onClick={() => setRoute('marketplace')} className={`px-3 py-1.5 rounded-lg ${route === 'marketplace' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>Marketplace</button>
-                <button onClick={() => setRoute('wizard')} className={`px-3 py-1.5 rounded-lg ${route === 'wizard' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>+ Sell Material (AI Wizard)</button>
-                <button onClick={() => setRoute('evaluation')} className={`px-3 py-1.5 rounded-lg ${route === 'evaluation' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>AI Model Metrics</button>
-                {user && (user.user_type === 'SELLER' || user.user_type === 'BOTH') && (
-                  <button onClick={() => setRoute('seller')} className={`px-3 py-1.5 rounded-lg ${route === 'seller' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>Seller Hub</button>
-                )}
-                {user && (user.user_type === 'BUYER' || user.user_type === 'BOTH') && (
-                  <button onClick={() => setRoute('buyer')} className={`px-3 py-1.5 rounded-lg ${route === 'buyer' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>My Orders</button>
-                )}
+              {/* Navigation Links */}
+              <div className="hidden md:flex items-center gap-1 lg:gap-2 text-sm font-semibold text-gray-700">
+                <button onClick={() => handleNavigate('landing')} className={`px-3 py-1.5 rounded-lg transition ${route === 'landing' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>
+                  Home
+                </button>
+                <button onClick={() => handleNavigate('assessment')} className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${route === 'assessment' ? 'bg-emerald-100 text-emerald-800 font-bold' : 'text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/60'}`}>
+                  <span>✨</span> AI Assessment
+                </button>
+                <button onClick={() => handleNavigate('marketplace')} className={`px-3 py-1.5 rounded-lg transition ${route === 'marketplace' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>
+                  Marketplace
+                </button>
+                <button onClick={() => handleNavigate('sell')} className={`px-3 py-1.5 rounded-lg transition ${route === 'sell' || route === 'wizard' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>
+                  Sell
+                </button>
+                <button onClick={() => handleNavigate('buy')} className={`px-3 py-1.5 rounded-lg transition ${route === 'buy' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>
+                  Buy
+                </button>
+                <button onClick={() => handleNavigate('profile')} className={`px-3 py-1.5 rounded-lg transition ${route === 'profile' ? 'bg-emerald-50 text-emerald-700' : 'hover:bg-gray-100'}`}>
+                  Profile
+                </button>
                 {user && user.user_type === 'ADMIN' && (
-                  <button onClick={() => setRoute('admin')} className={`px-3 py-1.5 rounded-lg ${route === 'admin' ? 'bg-purple-50 text-purple-700' : 'hover:bg-gray-100'}`}>Admin Telemetry</button>
+                  <button onClick={() => handleNavigate('admin')} className={`px-3 py-1.5 rounded-lg transition text-purple-700 ${route === 'admin' ? 'bg-purple-50' : 'hover:bg-purple-50'}`}>
+                    Admin
+                  </button>
                 )}
               </div>
 
+              {/* User / Auth Controls */}
               <div className="flex items-center gap-3">
                 {user ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-900">{user.name}</span>
-                    <button onClick={handleLogout} className="px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg">Sign Out</button>
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={() => handleNavigate('profile')} className="flex items-center gap-2 hover:bg-gray-100 px-2.5 py-1 rounded-lg transition">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs">
+                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <span className="text-xs font-bold text-gray-900 hidden sm:inline">{user.name}</span>
+                    </button>
+                    <button onClick={handleLogout} className="px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition">Sign Out</button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setRoute('login')} className="px-3.5 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-lg">Sign In</button>
-                    <button onClick={() => setRoute('register')} className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm">Get Started</button>
+                    <button onClick={() => handleNavigate('login')} className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 rounded-lg transition">Login</button>
+                    <button onClick={() => handleNavigate('register')} className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">Register</button>
                   </div>
                 )}
               </div>
             </div>
           </nav>
 
-          {/* Main Body Switcher */}
+          {/* Main Body Router */}
           <main className="flex-1">
-            {route === 'landing' && <LandingView onNavigate={setRoute} />}
-            {route === 'marketplace' && <MarketplaceView onSelect={(id) => { setSelectedListingId(id); setRoute('detail'); }} onNavigate={setRoute} />}
-            {route === 'detail' && <DetailView id={selectedListingId} onBack={() => setRoute('marketplace')} onNavigate={setRoute} user={user} />}
-            {route === 'wizard' && <WizardView onNavigate={setRoute} user={user} />}
-            {route === 'seller' && <SellerView onNavigate={setRoute} />}
-            {route === 'buyer' && <BuyerView onSelect={(id) => { setSelectedListingId(id); setRoute('detail'); }} onNavigate={setRoute} />}
-            {route === 'admin' && <AdminView onSelect={(id) => { setSelectedListingId(id); setRoute('detail'); }} />}
+            {route === 'landing' && <LandingView onNavigate={handleNavigate} />}
+            {route === 'assessment' && (
+              <AssessmentView
+                onNavigate={handleNavigate}
+                onStartListing={(data) => {
+                  setPrefillData(data);
+                  handleNavigate('sell');
+                }}
+              />
+            )}
+            {route === 'marketplace' && <MarketplaceView onSelect={(id) => { setSelectedListingId(id); handleNavigate('detail'); }} onNavigate={handleNavigate} />}
+            {route === 'detail' && <DetailView id={selectedListingId} onBack={() => handleNavigate('marketplace')} onNavigate={handleNavigate} user={user} />}
+            {(route === 'sell' || route === 'wizard') && <WizardView onNavigate={handleNavigate} user={user} initialData={prefillData} />}
+            {route === 'buy' && <BuyerView onSelect={(id) => { setSelectedListingId(id); handleNavigate('detail'); }} onNavigate={handleNavigate} />}
+            {route === 'profile' && <ProfileView user={user} onNavigate={handleNavigate} onLogout={handleLogout} onSelect={(id) => { setSelectedListingId(id); handleNavigate('detail'); }} />}
+            {route === 'seller' && <SellerView onNavigate={handleNavigate} />}
+            {route === 'buyer' && <BuyerView onSelect={(id) => { setSelectedListingId(id); handleNavigate('detail'); }} onNavigate={handleNavigate} />}
+            {route === 'admin' && <AdminView onSelect={(id) => { setSelectedListingId(id); handleNavigate('detail'); }} />}
             {route === 'evaluation' && <EvaluationView />}
-            {route === 'login' && <LoginView onNavigate={setRoute} onLogin={setUser} />}
-            {route === 'register' && <RegisterView onNavigate={setRoute} onLogin={setUser} />}
+            {route === 'login' && <LoginView onNavigate={handleNavigate} onLogin={setUser} />}
+            {route === 'register' && <RegisterView onNavigate={handleNavigate} onLogin={setUser} />}
           </main>
 
           {/* Footer */}
           <footer className="bg-slate-900 text-slate-400 py-10 text-xs border-t border-slate-800">
             <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div>
-                <span className="font-bold text-white text-sm">REBUILD AI</span> — AI-Powered Construction Waste Reuse & Second-Market Platform
+                <span className="font-bold text-white text-sm">BUILD BACK</span> — AI-Powered Construction Waste Reuse & Second-Market Platform
               </div>
-              <div>MobileNetV2 • Gradient Boosting (R²=0.935) • Circular LCA • MIT License</div>
+              <div className="flex gap-4 items-center">
+                <button onClick={() => handleNavigate('assessment')} className="hover:text-white">AI Assessment</button>
+                <button onClick={() => handleNavigate('marketplace')} className="hover:text-white">Marketplace</button>
+                <button onClick={() => handleNavigate('evaluation')} className="hover:text-white">Model Metrics</button>
+                <span>MobileNetV2 • R²=0.935 • MIT License</span>
+              </div>
             </div>
           </footer>
         </div>
       );
     }
+
 
     // ==========================================
     // 1. Landing Page View
@@ -326,12 +389,15 @@
               <p className="text-base text-gray-600 max-w-xl mx-auto mb-8">
                 Identify salvaged construction materials instantly using your device camera, grade condition A–E, and trade verified surplus with machine-learning price predictions.
               </p>
-              <div className="flex justify-center gap-4">
-                <button onClick={() => onNavigate('wizard')} className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 text-sm">
-                  Scan & Sell Material (AI Camera)
+              <div className="flex flex-wrap justify-center gap-4">
+                <button onClick={() => onNavigate('assessment')} className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 text-sm">
+                  ✨ Run AI Assessment
                 </button>
                 <button onClick={() => onNavigate('marketplace')} className="px-8 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-bold rounded-xl text-sm">
-                  Explore Marketplace
+                  Explore Marketplace &rarr;
+                </button>
+                <button onClick={() => onNavigate('sell')} className="px-6 py-3.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl text-sm">
+                  Sell Material
                 </button>
               </div>
 
@@ -640,21 +706,442 @@
     }
 
     // ==========================================
-    // 4. Create Listing Wizard (9 Steps)
+    // 3.5 Dedicated AI Assessment View (Page 1)
     // ==========================================
-    function WizardView({ onNavigate, user }) {
-      const [step, setStep] = useState(1);
+    function AssessmentView({ onNavigate, onStartListing }) {
       const [cameraOpen, setCameraOpen] = useState(false);
       const [photo, setPhoto] = useState(null);
-      const [aiData, setAiData] = useState(null);
+      const [analyzing, setAnalyzing] = useState(false);
+      const [cRes, setCRes] = useState(null);
       const [selectedMat, setSelectedMat] = useState('');
+      const [age, setAge] = useState(2.0);
+      const [damage, setDamage] = useState(10.0);
+      const [qData, setQData] = useState(null);
+      const [qty, setQty] = useState(500);
+      const [unit, setUnit] = useState('Pieces');
+      const [valData, setValData] = useState(null);
+      const [envData, setEnvData] = useState(null);
+      const [activeTab, setActiveTab] = useState('quality');
+      const [errorMsg, setErrorMsg] = useState(null);
+
+      const runAI = async (imgData) => {
+        setAnalyzing(true);
+        setErrorMsg(null);
+        try {
+          const fd = new FormData();
+          fd.append('base64_image', imgData);
+          const c = await API.req('/api/ml/predict-material', { method: 'POST', body: fd });
+          setCRes(c);
+          setSelectedMat(c.predicted_material);
+
+          const q = await API.req('/api/ml/assess-quality', {
+            method: 'POST',
+            body: { material_name: c.predicted_material, age_years: age, damage_percentage: damage, original_usage: 'Demolition Salvage' }
+          });
+          setQData(q);
+
+          const p = await API.req('/api/ml/predict-price', {
+            method: 'POST',
+            body: { material_name: c.predicted_material, quantity: qty, unit: unit, quality_score: q.quality_score, age_years: age, damage_percentage: damage, city: 'Bangalore' }
+          });
+          setValData(p);
+
+          try {
+            const env = await API.req('/api/environmental/calculate', {
+              method: 'POST',
+              body: { material_name: c.predicted_material, quantity: qty, unit: unit }
+            });
+            setEnvData(env);
+          } catch(e) {}
+        } catch(err) {
+          setErrorMsg(err.message || 'AI diagnostics failed. You can adjust parameters manually.');
+        } finally {
+          setAnalyzing(false);
+        }
+      };
+
+      const handleUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setPhoto(ev.target.result);
+          runAI(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleRecalc = async () => {
+        if (!selectedMat) return;
+        setAnalyzing(true);
+        try {
+          const q = await API.req('/api/ml/assess-quality', {
+            method: 'POST',
+            body: { material_name: selectedMat, age_years: age, damage_percentage: damage, original_usage: 'Demolition Salvage' }
+          });
+          setQData(q);
+
+          const p = await API.req('/api/ml/predict-price', {
+            method: 'POST',
+            body: { material_name: selectedMat, quantity: qty, unit: unit, quality_score: q.quality_score, age_years: age, damage_percentage: damage, city: 'Bangalore' }
+          });
+          setValData(p);
+
+          const env = await API.req('/api/environmental/calculate', {
+            method: 'POST',
+            body: { material_name: selectedMat, quantity: qty, unit: unit }
+          });
+          setEnvData(env);
+        } catch(e) {}
+        finally { setAnalyzing(false); }
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in space-y-8">
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+            <span className="inline-block px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded-full mb-3 border border-emerald-400/20">
+              MobileNetV2 + Gradient Boosting + Circular LCA
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2">
+              AI Construction Material Assessment
+            </h1>
+            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl">
+              Capture or upload salvaged materials on-site. The AI instantly identifies 20 material classes, evaluates condition Grade A–E, predicts fair second-market valuation, and computes circular LCA carbon savings.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Col: Photo & Fine-Tune */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-gray-900">1. Capture Material Photo</h3>
+                {photo ? (
+                  <div className="relative rounded-xl overflow-hidden border aspect-video bg-black">
+                    <img src={photo} alt="Captured" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-2 right-2 flex gap-2">
+                      <button onClick={() => setCameraOpen(true)} className="px-3 py-1 bg-white text-gray-900 text-xs font-semibold rounded-lg shadow">Retake</button>
+                      <label className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow cursor-pointer">
+                        Upload <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setCameraOpen(true)}
+                      className="w-full py-5 border-2 border-dashed border-emerald-300 bg-emerald-50/50 hover:bg-emerald-50 rounded-xl text-emerald-800 flex flex-col items-center justify-center gap-1 transition"
+                    >
+                      <span className="text-2xl">📷</span>
+                      <span className="font-bold text-sm">Open Device Camera</span>
+                      <span className="text-xs text-emerald-600">Supports phone rear-facing camera & webcams</span>
+                    </button>
+                    <label className="w-full py-2.5 border rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 flex items-center justify-center gap-2 cursor-pointer text-xs font-semibold transition">
+                      📁 Select Photo from Files
+                      <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+                    </label>
+                  </div>
+                )}
+
+                {/* Fine tune parameters */}
+                <div className="pt-4 border-t space-y-3 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-700 uppercase tracking-wider text-[11px]">Fine-Tune Parameters</span>
+                    {cRes && (
+                      <button onClick={handleRecalc} className="text-emerald-700 font-bold hover:underline">Recalculate ↻</button>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-gray-600 block mb-1">Target Material</label>
+                    <select value={selectedMat} onChange={(e) => setSelectedMat(e.target.value)} className="w-full border p-2 rounded-lg bg-white">
+                      <option value="">Auto-detected or choose</option>
+                      {["Bricks", "Concrete", "Cement Blocks", "Steel / Rebar", "Wood / Timber", "Tiles", "Glass", "PVC Pipes", "Metal Pipes", "Doors", "Windows", "Stones", "Granite", "Marble"].map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-gray-600 block mb-1">Age in Use: {age} yrs</label>
+                      <input type="range" min="0" max="20" step="0.5" value={age} onChange={(e) => setAge(parseFloat(e.target.value))} className="w-full accent-emerald-600" />
+                    </div>
+                    <div>
+                      <label className="text-gray-600 block mb-1">Wear / Defect: {damage}%</label>
+                      <input type="range" min="0" max="50" step="1" value={damage} onChange={(e) => setDamage(parseFloat(e.target.value))} className="w-full accent-emerald-600" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-gray-600 block mb-1">Quantity</label>
+                      <input type="number" value={qty} onChange={(e) => setQty(parseFloat(e.target.value) || 1)} className="w-full border p-2 rounded-lg" />
+                    </div>
+                    <div>
+                      <label className="text-gray-600 block mb-1">Unit</label>
+                      <select value={unit} onChange={(e) => setUnit(e.target.value)} className="w-full border p-2 rounded-lg bg-white">
+                        <option value="Pieces">Pieces</option>
+                        <option value="Tonnes">Tonnes</option>
+                        <option value="Kg">Kg</option>
+                        <option value="Sq Ft">Sq Ft</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Bridge to Selling */}
+              {cRes && (
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-200 text-center space-y-2">
+                  <h4 className="font-bold text-emerald-900 text-sm">Ready to trade this material?</h4>
+                  <p className="text-xs text-emerald-700">Push this verified assessment directly into the BuildBack Marketplace.</p>
+                  <button
+                    onClick={() => onStartListing({ material_name: selectedMat, photo: photo, qData: qData, valData: valData, qty: qty, unit: unit })}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition"
+                  >
+                    List on Marketplace Now &rarr;
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Right Col: Diagnostics Output */}
+            <div className="lg:col-span-7">
+              {analyzing ? (
+                <div className="bg-white rounded-2xl p-12 border text-center space-y-3 min-h-[400px] flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin"></div>
+                  <h3 className="text-base font-bold text-gray-900">Running Deep Neural Inference...</h3>
+                  <p className="text-xs text-gray-500 max-w-sm">Classifying 1,280-dim visual embeddings and grading condition score A–E.</p>
+                </div>
+              ) : cRes ? (
+                <div className="space-y-6">
+                  {/* Result Header */}
+                  <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Identified Material Class</span>
+                      <h2 className="text-2xl font-black text-gray-900">{selectedMat || cRes.predicted_material}</h2>
+                      <span className="text-xs text-gray-500">Category: <strong className="text-gray-700">{cRes.category || 'Masonry & Structural'}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="text-xs text-gray-500 block">AI Confidence</span>
+                        <span className="text-lg font-bold text-emerald-600">{(cRes.confidence * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className={`px-4 py-2 rounded-xl text-center font-black text-xl shadow-sm ${
+                        qData?.quality_grade === 'A' ? 'bg-emerald-100 text-emerald-800' :
+                        qData?.quality_grade === 'B' ? 'bg-blue-100 text-blue-800' :
+                        qData?.quality_grade === 'C' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        Grade {qData?.quality_grade || 'B'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex border-b gap-3 text-xs font-semibold text-gray-500">
+                    <button onClick={() => setActiveTab('quality')} className={`pb-2.5 transition ${activeTab === 'quality' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : 'hover:text-gray-900'}`}>
+                      Quality & Condition
+                    </button>
+                    <button onClick={() => setActiveTab('valuation')} className={`pb-2.5 transition ${activeTab === 'valuation' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : 'hover:text-gray-900'}`}>
+                      AI Valuation
+                    </button>
+                    <button onClick={() => setActiveTab('lca')} className={`pb-2.5 transition ${activeTab === 'lca' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : 'hover:text-gray-900'}`}>
+                      Circular LCA
+                    </button>
+                  </div>
+
+                  {/* Tab 1: Quality */}
+                  {activeTab === 'quality' && qData && (
+                    <div className="bg-white rounded-2xl p-6 border space-y-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-slate-50 rounded-xl border text-center">
+                          <span className="text-[11px] text-gray-500 block">Condition Score</span>
+                          <span className="text-xl font-black text-gray-900">{qData.quality_score}/100</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-xl border text-center">
+                          <span className="text-[11px] text-gray-500 block">Wear Degradation</span>
+                          <span className="text-xl font-black text-gray-900">{damage}%</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-xl border text-center">
+                          <span className="text-[11px] text-gray-500 block">Service Life</span>
+                          <span className="text-xl font-black text-emerald-600">{Math.max(10, Math.round(100 - damage * 1.5))}%</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-950 space-y-1">
+                        <span className="font-bold text-emerald-800">Circular Reuse Recommendation:</span>
+                        <p>{qData.recommendation || "Certified for direct structural reuse, masonry walls, architectural accents, and high-performance secondary installations."}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 2: Valuation */}
+                  {activeTab === 'valuation' && valData && (
+                    <div className="bg-white rounded-2xl p-6 border space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                          <span className="text-[11px] font-bold text-emerald-800 uppercase block">Estimated Second-Market Price</span>
+                          <div className="text-2xl font-black text-emerald-900 mt-1">₹{valData.estimated_price.toLocaleString()}</div>
+                          <span className="text-[11px] text-emerald-700">₹{valData.unit_price} / {unit}</span>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-xl border">
+                          <span className="text-[11px] font-bold text-gray-600 uppercase block">Virgin Market Price</span>
+                          <div className="text-2xl font-black text-gray-900 mt-1">₹{valData.virgin_price_comparison.toLocaleString()}</div>
+                          <span className="text-[11px] text-emerald-600 font-bold">~{valData.discount_pct}% Discount vs Virgin</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border text-xs text-gray-600 flex justify-between">
+                        <span>Liquidation Range: <b>₹{valData.price_range_low.toLocaleString()}</b></span>
+                        <span>Ceiling: <b>₹{valData.price_range_high.toLocaleString()}</b></span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 3: LCA */}
+                  {activeTab === 'lca' && (
+                    <div className="bg-white rounded-2xl p-6 border space-y-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                          <span className="text-[11px] text-emerald-800 block">Avoided CO₂e</span>
+                          <div className="text-xl font-black text-emerald-950 mt-1">{envData ? envData.co2_saved_kg : Math.round(qty * 0.85)} kg</div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-center">
+                          <span className="text-[11px] text-blue-800 block">Landfill Diverted</span>
+                          <div className="text-xl font-black text-blue-950 mt-1">{envData ? envData.landfill_diverted_tonnes : (qty * 0.002).toFixed(2)} t</div>
+                        </div>
+                        <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 text-center">
+                          <span className="text-[11px] text-teal-800 block">Mature Trees Equiv.</span>
+                          <div className="text-xl font-black text-teal-950 mt-1">{envData ? envData.trees_equivalent : Math.round(qty * 0.04)}</div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Benchmark LCA calculated according to University of Bath ICE factors for circular construction salvage.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl p-12 border text-center space-y-3 min-h-[400px] flex flex-col items-center justify-center text-gray-400">
+                  <span className="text-4xl">♻️</span>
+                  <h3 className="text-base font-bold text-gray-700">Ready for Assessment</h3>
+                  <p className="text-xs max-w-sm">Capture a live photo using your camera or upload an image on the left to start the AI analysis.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <CameraModal isOpen={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={(p) => { setPhoto(p); runAI(p); }} />
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 3.6 Dedicated Profile View (Unified Hub)
+    // ==========================================
+    function ProfileView({ user, onNavigate, onLogout, onSelect }) {
+      const [tab, setTab] = useState('overview');
+
+      if (!user) {
+        return (
+          <div className="max-w-md mx-auto my-16 px-4 fade-in">
+            <div className="bg-white rounded-3xl p-8 border shadow-lg text-center space-y-4">
+              <span className="text-4xl">👤</span>
+              <h2 className="text-xl font-extrabold text-gray-900">Sign in to BuildBack</h2>
+              <p className="text-xs text-gray-500">Access your active listings, purchase requests, and circular LCA metrics.</p>
+              <div className="space-y-2 pt-2">
+                <button onClick={() => onNavigate('login')} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow">Log In</button>
+                <button onClick={() => onNavigate('register')} className="w-full py-2.5 border bg-gray-50 text-gray-700 font-bold rounded-xl text-xs">Create Account</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const isSeller = user.user_type === 'SELLER' || user.user_type === 'BOTH';
+      const isBuyer = user.user_type === 'BUYER' || user.user_type === 'BOTH';
+      const isAdmin = user.user_type === 'ADMIN';
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in space-y-6">
+          {/* Header Banner */}
+          <div className="bg-white rounded-3xl p-6 border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white text-2xl font-black flex items-center justify-center shadow-md shadow-emerald-600/20">
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-black text-gray-900">{user.name}</h1>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">{user.user_type}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">{user.email} {user.company_name ? `• ${user.company_name}` : ''}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => onNavigate('sell')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow">+ Sell Material</button>
+              <button onClick={onLogout} className="px-3 py-2 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 rounded-xl text-xs font-semibold">Sign Out</button>
+            </div>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex border-b gap-3 text-xs font-semibold text-gray-500">
+            <button onClick={() => setTab('overview')} className={`pb-2.5 ${tab === 'overview' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : ''}`}>Account & Impact</button>
+            {isSeller && <button onClick={() => setTab('seller')} className={`pb-2.5 ${tab === 'seller' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : ''}`}>Seller Inventory</button>}
+            {isBuyer && <button onClick={() => setTab('buyer')} className={`pb-2.5 ${tab === 'buyer' ? 'border-b-2 border-emerald-600 text-emerald-700 font-bold' : ''}`}>My Orders & Requests</button>}
+            {isAdmin && <button onClick={() => setTab('admin')} className={`pb-2.5 ${tab === 'admin' ? 'border-b-2 border-purple-600 text-purple-700 font-bold' : ''}`}>Admin Platform</button>}
+          </div>
+
+          {/* Tab Content */}
+          {tab === 'overview' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-emerald-800 to-teal-900 text-white rounded-3xl p-6 space-y-4 shadow-lg">
+                <span className="text-xs uppercase font-bold text-emerald-300">Circular Impact Credential</span>
+                <h3 className="text-lg font-bold">Lifetime ESG Savings</h3>
+                <div className="space-y-2 text-xs">
+                  <div className="bg-white/10 p-3 rounded-xl">
+                    <span className="text-emerald-200 block text-[11px]">Carbon Emissions Avoided</span>
+                    <span className="text-xl font-bold">2,450 kg CO₂e</span>
+                  </div>
+                  <div className="bg-white/10 p-3 rounded-xl">
+                    <span className="text-emerald-200 block text-[11px]">Landfill Diverted</span>
+                    <span className="text-xl font-bold">14.8 Metric Tonnes</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-2 bg-white rounded-3xl p-6 border space-y-4">
+                <h3 className="text-sm font-bold text-gray-900">User Credentials</h3>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-gray-50 rounded-xl"><span className="text-gray-400 block">Name</span><span className="font-bold text-gray-900">{user.name}</span></div>
+                  <div className="p-3 bg-gray-50 rounded-xl"><span className="text-gray-400 block">Email</span><span className="font-bold text-gray-900">{user.email}</span></div>
+                  <div className="p-3 bg-gray-50 rounded-xl"><span className="text-gray-400 block">Company</span><span className="font-bold text-gray-900">{user.company_name || 'Individual'}</span></div>
+                  <div className="p-3 bg-gray-50 rounded-xl"><span className="text-gray-400 block">Location</span><span className="font-bold text-gray-900">{user.city || 'Bangalore'}</span></div>
+                </div>
+                <div className="pt-2">
+                  <button onClick={() => onNavigate('assessment')} className="text-xs text-emerald-700 font-bold hover:underline">Run New AI Material Assessment &rarr;</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'seller' && <SellerView onNavigate={onNavigate} />}
+          {tab === 'buyer' && <BuyerView onSelect={onSelect} onNavigate={onNavigate} />}
+          {tab === 'admin' && <AdminView onSelect={onSelect} />}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 4. Create Listing Wizard (9 Steps)
+    // ==========================================
+    function WizardView({ onNavigate, user, initialData = null }) {
+      const [step, setStep] = useState(initialData?.valData ? 3 : 1);
+      const [cameraOpen, setCameraOpen] = useState(false);
+      const [photo, setPhoto] = useState(initialData?.photo || null);
+      const [aiData, setAiData] = useState(null);
+      const [selectedMat, setSelectedMat] = useState(initialData?.material_name || '');
       const [age, setAge] = useState(1.5);
       const [damage, setDamage] = useState(8);
-      const [qData, setQData] = useState(null);
-      const [qty, setQty] = useState(1000);
-      const [unit, setUnit] = useState('Pieces');
-      const [price, setPrice] = useState('');
-      const [valData, setValData] = useState(null);
+      const [qData, setQData] = useState(initialData?.qData || null);
+      const [qty, setQty] = useState(initialData?.qty || 1000);
+      const [unit, setUnit] = useState(initialData?.unit || 'Pieces');
+      const [price, setPrice] = useState(initialData?.valData?.estimated_price || '');
+      const [valData, setValData] = useState(initialData?.valData || null);
       const [city, setCity] = useState(user?.city || 'Bangalore');
       const [loading, setLoading] = useState(false);
       const [done, setDone] = useState(false);

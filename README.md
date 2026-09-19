@@ -1,4 +1,4 @@
-# REBUILD AI
+# BuildBack
 
 **AI-Powered Construction Waste Reuse & Second-Market Platform**
 
@@ -13,22 +13,20 @@
 
 ## 🚀 Live Demo & Deployment
 
+* **Main GitHub Repository:** [https://github.com/amulyahs-tech/build_back](https://github.com/amulyahs-tech/build_back)
 * **Streamlit App Entrypoint:** `streamlit/app.py`
-* **GitHub Repository:** [https://github.com/amulyahs-tech/build_back](https://github.com/amulyahs-tech/build_back)
 * **Deploy on Streamlit Community Cloud:** Set **Main file path** to `streamlit/app.py` on [share.streamlit.io](https://share.streamlit.io/).
+* **Deploy Full Web Application on Render / Railway:** Connect repo and deploy via `render.yaml` or `Dockerfile`.
 
 ---
 
 ## 🏗️ 1. Project Overview & Problem Statement
 
-Construction and Demolition (C&D) debris accounts for over 35% of all solid waste generated globally. Hundreds of millions of tonnes of salvageable structural elements—such as red clay bricks, TMT steel rebar, structural timber, concrete blocks, and granite—are routinely dumped into overburdened landfills due to:
+Construction and Demolition (C&D) debris accounts for over 35% of all solid waste generated globally. Hundreds of millions of tonnes of salvageable structural elements—such as red clay bricks, TMT steel rebar, structural timber, concrete blocks, and granite—are routinely dumped into overburdened landfills.
 
-1. **Lack of Standardized Quality Grading:** Buyers cannot objectively verify the integrity or wear of second-hand materials.
-2. **Arbitrary Pricing:** Sellers have no empirical baseline for fair secondary market valuation.
-3. **High Cataloging Friction:** Manual documentation of salvage lots on demolition sites is slow and inconsistent.
-4. **Missing Circular Accounting:** Lack of quantifiable, ESG-grade metrics on avoided embodied carbon and diverted landfill mass.
-
-**REBUILD AI** bridges this critical gap by combining **Computer Vision (MobileNetV2)**, **Multimodal Quality Grading (A–E)**, **Gradient Boosting Valuation ($R^2 \approx 0.935$)**, and **Circular Life Cycle Assessment (LCA)** into an end-to-end trading platform.
+**BuildBack** unifies two previously separate web interfaces into one complete circular platform:
+1. **AI Material Assessment (`/assessment`)**: Real-time camera diagnostics (`getUserMedia`), MobileNetV2 20-class identification, condition grading (A–E), Gradient Boosting price prediction ($R^2 \ge 0.935$), and circular LCA calculation.
+2. **Construction Waste Marketplace (`/marketplace`, `/sell`, `/buy`, `/profile`)**: Catalog browsing, search/filters, purchase negotiation, order management, and user roles.
 
 ---
 

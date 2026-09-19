@@ -48,11 +48,11 @@ export default function LandingPage({ onNavigate }) {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={() => onNavigate('wizard')}
+              onClick={() => onNavigate('assessment')}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-600/25 transition"
             >
-              <Camera className="w-5 h-5" />
-              Scan & Sell Material
+              <Sparkles className="w-5 h-5" />
+              Run AI Assessment
             </button>
             <button
               onClick={() => onNavigate('marketplace')}
@@ -60,6 +60,13 @@ export default function LandingPage({ onNavigate }) {
             >
               Explore Marketplace
               <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onNavigate('sell')}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-base border border-emerald-200 transition"
+            >
+              <Camera className="w-4 h-4" />
+              Sell Material
             </button>
           </div>
         </div>

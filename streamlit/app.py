@@ -19,7 +19,7 @@ from scripts.seed_database import seed_if_empty
 
 # Streamlit Page Setup
 st.set_page_config(
-    page_title="REBUILD AI – Construction Circular Economy",
+    page_title="BuildBack – Construction Circular Economy",
     page_icon="♻️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -71,17 +71,17 @@ st.markdown("""
 
 # Sidebar Navigation
 st.sidebar.image("https://img.icons8.com/color/96/recycle-sign.png", width=64)
-st.sidebar.title("REBUILD AI")
+st.sidebar.title("BuildBack")
 st.sidebar.caption("AI-Powered Construction Waste Reuse & Second-Market Platform")
 
 nav_choice = st.sidebar.radio(
     "Navigation",
     [
-        "📸 Material Analyzer",
-        "🛒 Marketplace Listings",
-        "💰 Price Estimator",
-        "🌱 Environmental Calculator",
-        "ℹ️ About & Technology"
+        "📸 AI Material Assessment",
+        "🛒 Construction Waste Marketplace",
+        "💰 AI Price Estimator",
+        "🌱 Circular LCA Calculator",
+        "ℹ️ About BuildBack & Architecture"
     ]
 )
 
