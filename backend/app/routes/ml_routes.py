@@ -4,7 +4,7 @@ import json
 import base64
 import logging
 from typing import Optional, List
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
@@ -27,8 +27,12 @@ router = APIRouter(prefix="/api/ml", tags=["Machine Learning"])
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"]
 
 
-def _extract_image_bytes(file: Optional[UploadFile], base64_image: Optional[str]) -> bytes:
-    """Helper to extract and validate image bytes from either file upload or base64 payload."""
+async def _extract_image_bytes(
+    request: Request,
+    file: Optional[UploadFile],
+    base64_image: Optional[str]
+) -> bytes:
+    """Helper to extract and validate image bytes from file upload, form data, or JSON payload."""
     if file and file.filename:
         content_type = file.content_type or ""
         # Validate format
@@ -38,8 +42,20 @@ def _extract_image_bytes(file: Optional[UploadFile], base64_image: Optional[str]
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Unsupported file format. Please upload JPG, PNG, or WEBP images."
                 )
-        return file.file.read()
-    elif base64_image:
+        return await file.read()
+
+    # Fallback to check JSON body if not provided via Form
+    if not base64_image:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            try:
+                body = await request.json()
+                if isinstance(body, dict):
+                    base64_image = body.get("base64_image") or body.get("image")
+            except Exception:
+                pass
+
+    if base64_image:
         try:
             # Handle data URL prefix e.g. "data:image/jpeg;base64,..."
             if "," in base64_image:
@@ -59,11 +75,12 @@ def _extract_image_bytes(file: Optional[UploadFile], base64_image: Optional[str]
 
 @router.post("/predict-material", response_model=MaterialClassificationResponse)
 async def predict_material(
+    request: Request,
     file: Optional[UploadFile] = File(None),
     base64_image: Optional[str] = Form(None)
 ):
     """Identifies construction material class, confidence, top predictions, and circular reuse options."""
-    image_bytes = _extract_image_bytes(file, base64_image)
+    image_bytes = await _extract_image_bytes(request, file, base64_image)
 
     try:
         result = material_classifier.predict(image_bytes)
@@ -109,12 +126,13 @@ def predict_price(payload: PricePredictRequest):
 
 @router.post("/image-search", response_model=List[SimilarSearchResponseItem])
 async def search_similar_materials(
+    request: Request,
     file: Optional[UploadFile] = File(None),
     base64_image: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """Finds visually and materially similar items in active inventory using 1280-dim embeddings."""
-    image_bytes = _extract_image_bytes(file, base64_image)
+    image_bytes = await _extract_image_bytes(request, file, base64_image)
     img_array, _ = material_classifier.preprocess_image(image_bytes)
     query_embedding = material_classifier.extract_embedding(img_array)
 

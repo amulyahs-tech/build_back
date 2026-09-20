@@ -610,7 +610,7 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
                       <Leaf className="w-6 h-6 text-emerald-600 mx-auto mb-1" />
                       <span className="text-xs text-emerald-800 font-medium">Avoided Embodied Carbon</span>
                       <div className="text-2xl font-black text-emerald-950 mt-1">
-                        {environmentalData ? environmentalData.co2_saved_kg : Math.round(quantity * 0.85)} kg
+                        {environmentalData ? (environmentalData.estimated_co2_saving_kg ?? environmentalData.co2_saved_kg) : Math.round(quantity * 0.85)} kg
                       </div>
                       <span className="text-[11px] text-emerald-700">Avoided CO2e emissions</span>
                     </div>
@@ -619,7 +619,7 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
                       <Layers className="w-6 h-6 text-blue-600 mx-auto mb-1" />
                       <span className="text-xs text-blue-800 font-medium">Landfill Diverted</span>
                       <div className="text-2xl font-black text-blue-950 mt-1">
-                        {environmentalData ? environmentalData.landfill_diverted_tonnes : (quantity * 0.002).toFixed(2)} t
+                        {environmentalData ? (environmentalData.estimated_weight_tonnes ?? environmentalData.landfill_diverted_tonnes) : (quantity * 0.002).toFixed(2)} t
                       </div>
                       <span className="text-[11px] text-blue-700">Metric tonnes solid debris</span>
                     </div>
@@ -649,17 +649,28 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
                   {similarListings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {similarListings.map((sim, idx) => (
-                        <div key={idx} className="p-3 rounded-xl border border-gray-200 flex gap-3 items-center hover:border-emerald-300 transition">
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            if (sim.id) {
+                              window.history.pushState({}, '', `/marketplace/${sim.id}`);
+                              onNavigate('marketplace');
+                            }
+                          }}
+                          className="p-3 rounded-xl border border-gray-200 flex gap-3 items-center hover:border-emerald-400 hover:shadow-sm transition cursor-pointer group"
+                        >
                           <img
                             src={sim.image_url || 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?w=200'}
-                            alt={sim.title}
-                            className="w-16 h-16 rounded-lg object-cover bg-gray-100"
+                            alt={sim.material_name || sim.title}
+                            className="w-16 h-16 rounded-lg object-cover bg-gray-100 group-hover:scale-105 transition duration-200"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-bold text-gray-900 truncate">{sim.title}</h4>
+                            <h4 className="text-xs font-bold text-gray-900 truncate group-hover:text-emerald-700 transition">
+                              {sim.material_name || sim.title}
+                            </h4>
                             <span className="text-[11px] text-gray-500">{sim.city} • Grade {sim.quality_grade}</span>
                             <div className="text-xs font-bold text-emerald-600 mt-1">
-                              INR {sim.price?.toLocaleString()}
+                              ₹{sim.price?.toLocaleString()}
                             </div>
                           </div>
                           <span className="text-[11px] px-2 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded">

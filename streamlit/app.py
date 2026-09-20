@@ -98,7 +98,7 @@ st.sidebar.info("""
 # ==============================================================================
 # PAGE 1: MATERIAL ANALYZER
 # ==============================================================================
-if nav_choice == "📸 Material Analyzer":
+if nav_choice == "📸 AI Material Assessment":
     st.markdown('<div class="main-header">📸 AI Material Identification & Quality Analyzer</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Take a real-time photo using your device camera or upload an existing site photograph.</div>', unsafe_allow_html=True)
 
@@ -214,7 +214,7 @@ if nav_choice == "📸 Material Analyzer":
 # ==============================================================================
 # PAGE 2: MARKETPLACE LISTINGS
 # ==============================================================================
-elif nav_choice == "🛒 Marketplace Listings":
+elif nav_choice == "🛒 Construction Waste Marketplace":
     st.markdown('<div class="main-header">🛒 Construction Material Marketplace</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Browse verified surplus and reclaimed construction inventory across Indian cities.</div>', unsafe_allow_html=True)
 
@@ -258,7 +258,7 @@ elif nav_choice == "🛒 Marketplace Listings":
 # ==============================================================================
 # PAGE 3: PRICE ESTIMATOR
 # ==============================================================================
-elif nav_choice == "💰 Price Estimator":
+elif nav_choice == "💰 AI Price Estimator":
     st.markdown('<div class="main-header">💰 Second-Market Price Valuation Engine</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Predict fair secondary market pricing using our trained Gradient Boosting Regressor (R² = 0.935).</div>', unsafe_allow_html=True)
 
@@ -293,7 +293,7 @@ elif nav_choice == "💰 Price Estimator":
 # ==============================================================================
 # PAGE 4: ENVIRONMENTAL CALCULATOR
 # ==============================================================================
-elif nav_choice == "🌱 Environmental Calculator":
+elif nav_choice == "🌱 Circular LCA Calculator":
     st.markdown('<div class="main-header">🌱 Circular LCA & Embodied Carbon Calculator</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Calculate avoided embodied carbon and diverted landfill mass based on lifecycle assessment data.</div>', unsafe_allow_html=True)
 
@@ -318,7 +318,7 @@ elif nav_choice == "🌱 Environmental Calculator":
 # ==============================================================================
 # PAGE 5: ABOUT & TECHNOLOGY
 # ==============================================================================
-elif nav_choice == "ℹ️ About & Technology":
+elif nav_choice == "ℹ️ About BuildBack & Architecture":
     st.markdown('<div class="main-header">ℹ️ About REBUILD AI</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Revolutionizing the construction circular economy through Computer Vision and Machine Learning.</div>', unsafe_allow_html=True)
 

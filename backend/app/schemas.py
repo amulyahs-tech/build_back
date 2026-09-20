@@ -208,6 +208,12 @@ class PurchaseRequestAction(BaseModel):
 
 # ------------------ Environmental Impact Schemas ------------------
 
+class EnvironmentalCalculateRequest(BaseModel):
+    material_name: str = Field("Bricks", description="Construction material name")
+    quantity: float = Field(1000.0, description="Quantity")
+    unit: str = Field("Pieces", description="Unit of measurement")
+
+
 class EnvironmentalImpactResponse(BaseModel):
     material_type: str
     quantity: float

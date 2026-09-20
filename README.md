@@ -149,9 +149,11 @@ rebuild-ai/
 │   │   │   └── Footer.jsx
 │   │   ├── pages/
 │   │   │   ├── LandingPage.jsx
-│   │   │   ├── MarketplacePage.jsx
+│   │   │   ├── AssessmentPage.jsx     # AI Material Assessment (Page 1)
+│   │   │   ├── MarketplacePage.jsx    # Construction Waste Marketplace (Page 2)
 │   │   │   ├── ListingDetailPage.jsx
 │   │   │   ├── CreateListingWizard.jsx # 9-step wizard with camera
+│   │   │   ├── ProfilePage.jsx        # Unified profile hub
 │   │   │   ├── SellerDashboard.jsx
 │   │   │   ├── BuyerDashboard.jsx
 │   │   │   ├── AdminDashboard.jsx

@@ -5,6 +5,10 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # Database configuration: defaults to SQLite for local development, easily configured for PostgreSQL via DATABASE_URL
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./rebuild_ai.db")
 
+# Normalize postgres:// to postgresql:// for SQLAlchemy compatibility on cloud platforms (Render, Heroku, Supabase)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(

@@ -1000,11 +1000,11 @@
                       <div className="grid grid-cols-3 gap-3">
                         <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
                           <span className="text-[11px] text-emerald-800 block">Avoided CO₂e</span>
-                          <div className="text-xl font-black text-emerald-950 mt-1">{envData ? envData.co2_saved_kg : Math.round(qty * 0.85)} kg</div>
+                          <div className="text-xl font-black text-emerald-950 mt-1">{envData ? (envData.estimated_co2_saving_kg ?? envData.co2_saved_kg) : Math.round(qty * 0.85)} kg</div>
                         </div>
                         <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-center">
                           <span className="text-[11px] text-blue-800 block">Landfill Diverted</span>
-                          <div className="text-xl font-black text-blue-950 mt-1">{envData ? envData.landfill_diverted_tonnes : (qty * 0.002).toFixed(2)} t</div>
+                          <div className="text-xl font-black text-blue-950 mt-1">{envData ? (envData.estimated_weight_tonnes ?? envData.landfill_diverted_tonnes) : (qty * 0.002).toFixed(2)} t</div>
                         </div>
                         <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 text-center">
                           <span className="text-[11px] text-teal-800 block">Mature Trees Equiv.</span>

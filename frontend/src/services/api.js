@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const RAW_API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = RAW_API_BASE ? RAW_API_BASE.replace(/\/+$/, '') : '';
 
 export const api = {
   getToken: () => localStorage.getItem('rebuild_token'),
@@ -80,7 +81,18 @@ export const api = {
 
   // Environmental Impact
   getEnvironmentalSummary: () => api.request('/api/environmental/summary'),
-  calculateLCA: (material_name, quantity, unit) => api.request(`/api/environmental/calculate?material_name=${encodeURIComponent(material_name)}&quantity=${quantity}&unit=${encodeURIComponent(unit)}`),
+  calculateLCA: (material_name, quantity, unit) => {
+    if (typeof material_name === 'object' && material_name !== null) {
+      return api.request('/api/environmental/calculate', { method: 'POST', body: material_name });
+    }
+    return api.request(`/api/environmental/calculate?material_name=${encodeURIComponent(material_name)}&quantity=${quantity}&unit=${encodeURIComponent(unit)}`);
+  },
+  calculateEnvironmental: (dataOrMaterial, quantity, unit) => {
+    if (typeof dataOrMaterial === 'object' && dataOrMaterial !== null) {
+      return api.request('/api/environmental/calculate', { method: 'POST', body: dataOrMaterial });
+    }
+    return api.calculateLCA(dataOrMaterial, quantity, unit);
+  },
 
   // Admin
   getAdminStats: () => api.request('/api/admin/statistics'),

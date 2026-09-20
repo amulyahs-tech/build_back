@@ -13,36 +13,47 @@ import AdminDashboard from './pages/AdminDashboard';
 import ModelEvaluationPage from './pages/ModelEvaluationPage';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
 
-// Path to Route mapper
-const getRouteFromPath = (path) => {
+// Path to Route & ID mapper
+const getRouteAndIdFromPath = (path) => {
   const p = path.toLowerCase().replace(/^\/+|\/+$/g, '');
-  if (!p || p === '') return 'landing';
-  if (p === 'assessment' || p === 'diagnostics') return 'assessment';
-  if (p === 'marketplace' || p === 'catalog') return 'marketplace';
-  if (p === 'sell' || p === 'wizard') return 'sell';
-  if (p === 'buy' || p === 'orders') return 'buy';
-  if (p === 'profile' || p === 'dashboard') return 'profile';
-  if (p === 'seller-dashboard') return 'seller-dashboard';
-  if (p === 'buyer-dashboard') return 'buyer-dashboard';
-  if (p === 'admin-dashboard' || p === 'admin') return 'admin-dashboard';
-  if (p === 'evaluation' || p === 'metrics') return 'evaluation';
-  if (p === 'login' || p === 'signin') return 'login';
-  if (p === 'register' || p === 'signup') return 'register';
-  if (p.startsWith('detail/') || p.startsWith('marketplace/')) return 'detail';
-  return 'landing';
+  if (!p || p === '') return { route: 'landing', id: null };
+  if (p === 'assessment' || p === 'diagnostics') return { route: 'assessment', id: null };
+  if (p === 'marketplace' || p === 'catalog') return { route: 'marketplace', id: null };
+  if (p === 'sell' || p === 'wizard') return { route: 'sell', id: null };
+  if (p === 'buy' || p === 'orders') return { route: 'buy', id: null };
+  if (p === 'profile' || p === 'dashboard') return { route: 'profile', id: null };
+  if (p === 'seller-dashboard') return { route: 'seller-dashboard', id: null };
+  if (p === 'buyer-dashboard') return { route: 'buyer-dashboard', id: null };
+  if (p === 'admin-dashboard' || p === 'admin') return { route: 'admin-dashboard', id: null };
+  if (p === 'evaluation' || p === 'metrics') return { route: 'evaluation', id: null };
+  if (p === 'login' || p === 'signin') return { route: 'login', id: null };
+  if (p === 'register' || p === 'signup') return { route: 'register', id: null };
+  if (p.startsWith('detail/')) {
+    const rawId = p.split('/')[1];
+    return { route: 'detail', id: rawId ? (parseInt(rawId, 10) || rawId) : null };
+  }
+  if (p.startsWith('marketplace/')) {
+    const rawId = p.split('/')[1];
+    if (rawId && rawId !== '') {
+      return { route: 'detail', id: parseInt(rawId, 10) || rawId };
+    }
+    return { route: 'marketplace', id: null };
+  }
+  return { route: 'landing', id: null };
 };
 
 export default function App() {
-  const [currentRoute, setCurrentRoute] = useState(() => {
-    return getRouteFromPath(window.location.pathname);
-  });
-  const [selectedListingId, setSelectedListingId] = useState(null);
+  const initial = getRouteAndIdFromPath(window.location.pathname);
+  const [currentRoute, setCurrentRoute] = useState(initial.route);
+  const [selectedListingId, setSelectedListingId] = useState(initial.id);
   const [prefilledAssessmentData, setPrefilledAssessmentData] = useState(null);
 
   // Sync browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentRoute(getRouteFromPath(window.location.pathname));
+      const { route, id } = getRouteAndIdFromPath(window.location.pathname);
+      setCurrentRoute(route);
+      if (id) setSelectedListingId(id);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);

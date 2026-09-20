@@ -5,7 +5,9 @@ from sqlalchemy import func
 
 from backend.app.database import get_db
 from backend.app.models import EnvironmentalImpact, Transaction
-from backend.app.schemas import EnvironmentalImpactResponse, EnvironmentalSummaryResponse
+from backend.app.schemas import (
+    EnvironmentalImpactResponse, EnvironmentalSummaryResponse, EnvironmentalCalculateRequest
+)
 from backend.app.ml.environmental_calculator import calculate_environmental_impact
 
 router = APIRouter(prefix="/api/environmental", tags=["Environmental & Circular LCA"])
@@ -39,10 +41,17 @@ def get_environmental_summary(db: Session = Depends(get_db)):
 
 
 @router.get("/calculate", response_model=EnvironmentalImpactResponse)
-def calculate_arbitrary_impact(
+def calculate_arbitrary_impact_get(
     material_name: str = "Bricks",
     quantity: float = 1000.0,
     unit: str = "Pieces"
 ):
-    """Estimate LCA environmental impact for user-entered material and quantity."""
+    """Estimate LCA environmental impact for user-entered material and quantity via GET."""
     return calculate_environmental_impact(material_name, quantity, unit)
+
+
+@router.post("/calculate", response_model=EnvironmentalImpactResponse)
+def calculate_arbitrary_impact_post(payload: EnvironmentalCalculateRequest):
+    """Estimate LCA environmental impact for user-entered material and quantity via POST."""
+    return calculate_environmental_impact(payload.material_name, payload.quantity, payload.unit)
+

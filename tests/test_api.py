@@ -147,6 +147,28 @@ def test_environmental_impact_summary():
     assert data["total_transactions"] >= 0
 
 
+def test_environmental_calculate_get_and_post():
+    """Test both GET and POST environmental LCA calculation endpoints."""
+    # GET test
+    resp_get = client.get("/api/environmental/calculate?material_name=Bricks&quantity=1200&unit=Pieces")
+    assert resp_get.status_code == 200
+    d_get = resp_get.json()
+    assert d_get["estimated_weight_tonnes"] > 0
+    assert d_get["estimated_co2_saving_kg"] > 0
+
+    # POST test
+    resp_post = client.post("/api/environmental/calculate", json={
+        "material_name": "Concrete",
+        "quantity": 5000,
+        "unit": "Kg"
+    })
+    assert resp_post.status_code == 200
+    d_post = resp_post.json()
+    assert d_post["estimated_weight_tonnes"] > 0
+    assert d_post["estimated_co2_saving_kg"] > 0
+
+
+
 def test_admin_monitoring():
     """Test admin AI monitoring endpoint with valid admin token."""
     # Login as admin
