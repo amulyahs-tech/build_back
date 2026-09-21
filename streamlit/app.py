@@ -15,7 +15,13 @@ from backend.app.ml.price_predictor import price_predictor, BASE_MARKET_RATES, C
 from backend.app.ml.environmental_calculator import calculate_environmental_impact
 from backend.app.database import SessionLocal, Base, engine
 from backend.app.models import Listing
-from scripts.seed_database import seed_if_empty
+
+try:
+    from scripts.seed_database import seed_if_empty
+except Exception:
+    def seed_if_empty(db):
+        pass
+
 
 # Streamlit Page Setup
 st.set_page_config(
