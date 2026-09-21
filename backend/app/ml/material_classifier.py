@@ -169,70 +169,218 @@ class MaterialClassifier:
             emb = emb / norm
         return emb.tolist()
 
+    @staticmethod
+    def _rgb_to_hsv(rgb_norm: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Converts float32 RGB (H, W, 3) in [0, 1] to HSV (H in [0, 360], S, V in [0, 1])."""
+        r, g, b = rgb_norm[..., 0], rgb_norm[..., 1], rgb_norm[..., 2]
+        maxc = np.maximum(np.maximum(r, g), b)
+        minc = np.minimum(np.minimum(r, g), b)
+        v = maxc
+        deltac = maxc - minc
+        s = np.where(maxc > 1e-5, deltac / (maxc + 1e-7), 0.0)
+
+        h = np.zeros_like(r)
+        mask = deltac > 1e-5
+        mask_r = mask & (r == maxc)
+        mask_g = mask & (g == maxc) & (~mask_r)
+        mask_b = mask & (b == maxc) & (~mask_r) & (~mask_g)
+
+        rc = (maxc - r) / (deltac + 1e-7)
+        gc = (maxc - g) / (deltac + 1e-7)
+        bc = (maxc - b) / (deltac + 1e-7)
+
+        h[mask_r] = (bc - gc)[mask_r]
+        h[mask_g] = (2.0 + rc - bc)[mask_g]
+        h[mask_b] = (4.0 + gc - rc)[mask_b]
+        h = (h / 6.0) % 1.0
+        h = h * 360.0
+        return h, s, v
+
     def predict(self, image_data: bytes) -> Dict[str, Any]:
         """Runs material classification pipeline on uploaded or camera-captured image bytes."""
         img_array, pil_img = self.preprocess_image(image_data)
         embedding = self.extract_embedding(img_array)
 
-        # Analyze image color, luminance, and texture variance
-        r_mean = float(np.mean(img_array[:, :, 0]))
-        g_mean = float(np.mean(img_array[:, :, 1]))
-        b_mean = float(np.mean(img_array[:, :, 2]))
+        # Multi-spectral and spatial texture extraction
+        rgb_norm = img_array / 255.0
+        h, s, v = self._rgb_to_hsv(rgb_norm)
+
+        r_mean = float(np.mean(rgb_norm[:, :, 0])) * 255.0
+        g_mean = float(np.mean(rgb_norm[:, :, 1])) * 255.0
+        b_mean = float(np.mean(rgb_norm[:, :, 2])) * 255.0
         gray = 0.2989 * r_mean + 0.5870 * g_mean + 0.1140 * b_mean
         contrast = float(np.std(img_array))
 
-        # Compute affinity scores across material classes
-        scores = {}
-        for idx, cls in enumerate(self.classes):
-            base_score = 0.05
+        # Saturation & Luminance features
+        s_mean = float(np.mean(s))
+        s_low_frac = float(np.mean(s < 0.18))
+        s_med_frac = float(np.mean((s >= 0.18) & (s < 0.55)))
 
-            if cls == "Bricks":
-                # High red, lower green/blue
-                if r_mean > g_mean * 1.2 and r_mean > b_mean * 1.3:
-                    base_score += 0.75 + (r_mean - g_mean) / 200.0
-                elif r_mean > 120 and r_mean > b_mean:
-                    base_score += 0.45
-            elif cls == "Concrete":
-                # Balanced gray, moderate luminance
-                diff_rg = abs(r_mean - g_mean)
-                diff_gb = abs(g_mean - b_mean)
-                if diff_rg < 25 and diff_gb < 25 and 60 < gray < 190:
-                    base_score += 0.70 + (30 - diff_rg) / 100.0
-            elif cls == "Steel / Rebar":
-                # Dark gray, high contrast edges
-                if gray < 110 and abs(r_mean - b_mean) < 30 and contrast > 40:
-                    base_score += 0.65
-            elif cls == "Wood / Timber":
-                # Warm brown / yellowish (red > green > blue)
-                if r_mean > g_mean and g_mean > b_mean and (r_mean - b_mean) > 30:
-                    base_score += 0.72
-            elif cls == "Tiles":
-                # High contrast, clean highlights
-                if contrast > 55 and (gray > 140 or r_mean > 150):
-                    base_score += 0.62
-            elif cls == "Glass":
-                # High brightness or cyan/blue tint
-                if (b_mean > r_mean and gray > 140) or gray > 210:
-                    base_score += 0.68
-            elif cls == "PVC Pipes":
-                # High blue/white or gray cylinder
-                if (b_mean > r_mean and b_mean > g_mean) or gray > 180:
-                    base_score += 0.64
-            elif cls == "Granite" or cls == "Marble":
-                if contrast > 45 and (r_mean + g_mean + b_mean) > 300:
-                    base_score += 0.58
-            elif cls == "Sand":
-                if r_mean > 140 and g_mean > 120 and b_mean < 110:
-                    base_score += 0.66
+        # 1. Brick / Terracotta Red: Hue in [0, 22] or [342, 360], high red dominance
+        red_mask = ((h <= 22) | (h >= 342)) & (s >= 0.20) & (v >= 0.18)
+        red_frac = float(np.mean(red_mask))
+
+        # 2. Wood / Timber: Warm Amber / Golden / Brown (Hue 18° to 52° and R > G > B)
+        wood_hue_mask = (h >= 18) & (h <= 52) & (s >= 0.20) & (v >= 0.25) & (v <= 0.90)
+        wood_rgb_order = (img_array[:, :, 0] > img_array[:, :, 1]) & (img_array[:, :, 1] > img_array[:, :, 2])
+        wood_frac = float(np.mean(wood_hue_mask & wood_rgb_order))
+
+        # 3. Steel / Rebar: Dark metallic gray or oxidized rust on steel
+        dark_steel_mask = (s < 0.32) & (v < 0.52)
+        dark_steel_frac = float(np.mean(dark_steel_mask))
+
+        rust_mask = (h >= 10) & (h <= 38) & (s >= 0.25) & (v >= 0.20) & (v <= 0.72)
+        rust_frac = float(np.mean(rust_mask))
+
+        # 4. Specular reflections (metallic, tile glaze, or glass glare)
+        specular_mask = (v > 0.80) & (s < 0.25)
+        specular_frac = float(np.mean(specular_mask))
+
+        # 5. Blue PVC or membrane
+        blue_mask = (h >= 180) & (h <= 250) & (s >= 0.25)
+        blue_frac = float(np.mean(blue_mask))
+
+        # 6. Sand: uniform golden-tan with moderate saturation and high luminance
+        sand_mask = (h >= 28) & (h <= 58) & (s >= 0.12) & (s <= 0.46) & (v >= 0.45)
+        sand_frac = float(np.mean(sand_mask))
+
+        # Texture gradients & directional anisotropy
+        v_gray = v
+        dy = np.abs(v_gray[1:, :] - v_gray[:-1, :])
+        dx = np.abs(v_gray[:, 1:] - v_gray[:, :-1])
+        grad_y_mean = float(np.mean(dy))
+        grad_x_mean = float(np.mean(dx))
+        edge_energy = (grad_y_mean + grad_x_mean) / 2.0
+
+        min_grad = min(grad_x_mean, grad_y_mean) + 1e-5
+        max_grad = max(grad_x_mean, grad_y_mean)
+        anisotropy = max_grad / min_grad
+
+        # Baseline scores for all 20 classes
+        scores = {c: 0.02 for c in self.classes}
+
+        # ---------------------------------------------------------
+        # Class 1: WOOD / TIMBER
+        # ---------------------------------------------------------
+        # Must have warm amber/brown hues, R > G > B, wood grain or contrast, not uniform mineral sand or dark rusted steel
+        is_wood_spectral = wood_frac > 0.18 or (r_mean > g_mean * 1.08 and g_mean > b_mean * 1.10 and (r_mean - b_mean) > 25)
+        is_mineral_sand = sand_frac > 0.28 and s_mean < 0.46 and edge_energy < 0.024 and anisotropy < 1.15
+        
+        if is_wood_spectral and not is_mineral_sand and gray > 105:
+            wood_score = 0.74 + min(0.22, wood_frac * 0.35)
+            if anisotropy > 1.10:
+                wood_score += 0.08  # longitudinal wood grain
+            if (r_mean - b_mean) > 30:
+                wood_score += 0.06
+            if contrast > 18:
+                wood_score += 0.04
+            scores["Wood / Timber"] = max(scores["Wood / Timber"], wood_score)
+
+        # ---------------------------------------------------------
+        # Class 2: STEEL / REBAR
+        # ---------------------------------------------------------
+        # Dark metallic gray, structural steel, or steel with surface oxidation/rust
+        is_rusted_steel = (rust_frac > 0.12 and gray < 112) or (dark_steel_frac > 0.10 and rust_frac > 0.04)
+        is_dark_steel = (dark_steel_frac > 0.18 and s_low_frac > 0.32) or (dark_steel_frac > 0.22) or (gray < 105 and s_low_frac > 0.45 and contrast > 22)
+
+        if is_rusted_steel or is_dark_steel:
+            steel_score = 0.74 + min(0.22, max(dark_steel_frac, rust_frac * 0.6) * 0.35)
+            if rust_frac > 0.08:
+                steel_score += 0.10  # surface oxidation on steel
+            if anisotropy > 1.12 or edge_energy > 0.020:
+                steel_score += 0.08  # rebar ribs / structural beam edges
+            if specular_frac > 0.01:
+                steel_score += 0.05  # metallic specular highlight
+            scores["Steel / Rebar"] = max(scores["Steel / Rebar"], steel_score)
+
+        # ---------------------------------------------------------
+        # Class 3: BRICKS
+        # ---------------------------------------------------------
+        if red_frac > 0.18 or (r_mean > g_mean * 1.22 and r_mean > b_mean * 1.30 and r_mean > 115):
+            brick_score = 0.72 + min(0.25, red_frac * 0.35)
+            if r_mean - g_mean > 38:
+                brick_score += 0.08
+            scores["Bricks"] = max(scores["Bricks"], brick_score)
+
+        # ---------------------------------------------------------
+        # Class 4: CONCRETE
+        # ---------------------------------------------------------
+        # Must be neutral matte gray, low saturation, NOT wood, NOT dark steel, NOT brick, NOT sand
+        if s_low_frac > 0.52 and 65 < gray < 185 and dark_steel_frac < 0.20 and wood_frac < 0.12 and red_frac < 0.10 and sand_frac < 0.25:
+            diff_rg = abs(r_mean - g_mean)
+            diff_gb = abs(g_mean - b_mean)
+            diff_rb = abs(r_mean - b_mean)
+            if diff_rg < 18 and diff_gb < 18 and diff_rb < 20:
+                concrete_score = 0.72 + (20.0 - max(diff_rg, diff_gb)) / 100.0
+                if anisotropy < 1.25:
+                    concrete_score += 0.08  # isotropic granular texture
+                if 85 < gray < 170:
+                    concrete_score += 0.06
+                scores["Concrete"] = max(scores["Concrete"], concrete_score)
+
+        # ---------------------------------------------------------
+        # Class 5: CEMENT BLOCKS
+        # ---------------------------------------------------------
+        if s_low_frac > 0.48 and 60 < gray < 135 and dark_steel_frac < 0.28 and edge_energy > 0.022 and scores["Concrete"] < 0.60:
+            scores["Cement Blocks"] = max(scores["Cement Blocks"], 0.55 + edge_energy)
+
+        # ---------------------------------------------------------
+        # Class 6: TILES & CERAMIC MATERIALS
+        # ---------------------------------------------------------
+        if (specular_frac > 0.03 and contrast > 42) or (contrast > 52 and (gray > 125 or r_mean > 155)):
+            if anisotropy > 1.20 or edge_energy > 0.028:
+                scores["Tiles"] = max(scores["Tiles"], 0.66 + specular_frac * 0.5)
+                scores["Ceramic Materials"] = max(scores["Ceramic Materials"], 0.58)
+
+        # ---------------------------------------------------------
+        # Class 7: GLASS & WINDOWS
+        # ---------------------------------------------------------
+        if (specular_frac > 0.05 and gray > 135) or (b_mean > r_mean and gray > 130 and s_mean < 0.22):
+            scores["Glass"] = max(scores["Glass"], 0.68 + specular_frac * 0.6)
+            if edge_energy > 0.02:
+                scores["Windows"] = max(scores["Windows"], 0.60)
+
+        # ---------------------------------------------------------
+        # Class 8: PVC PIPES & METAL PIPES
+        # ---------------------------------------------------------
+        if blue_frac > 0.18:
+            scores["PVC Pipes"] = max(scores["PVC Pipes"], 0.82)
+        elif anisotropy > 1.30 and s_low_frac > 0.38:
+            if dark_steel_frac > 0.18:
+                scores["Metal Pipes"] = max(scores["Metal Pipes"], 0.68)
             else:
-                # Disperse probability realistically
-                base_score += (idx % 4) * 0.05
+                scores["PVC Pipes"] = max(scores["PVC Pipes"], 0.62)
 
-            scores[cls] = max(0.01, base_score)
+        # ---------------------------------------------------------
+        # Class 9: SAND & STONES / AGGREGATES
+        # ---------------------------------------------------------
+        if (sand_frac > 0.28 or is_mineral_sand) and r_mean > 120 and g_mean > 105 and dark_steel_frac < 0.15:
+            sand_score = 0.74 + min(0.20, sand_frac * 0.3)
+            if edge_energy < 0.025:
+                sand_score += 0.08  # fine uniform texture
+            scores["Sand"] = max(scores["Sand"], sand_score)
+        elif s_low_frac > 0.38 and edge_energy > 0.032 and contrast > 32 and wood_frac < 0.12 and dark_steel_frac < 0.20:
+            scores["Stones"] = max(scores["Stones"], 0.62)
+        elif s_low_frac > 0.38 and edge_energy > 0.032 and contrast > 32 and wood_frac < 0.12 and dark_steel_frac < 0.20:
+            scores["Stones"] = max(scores["Stones"], 0.62)
 
-        # Softmax normalization to obtain legitimate probabilities
-        score_vals = np.array(list(scores.values()), dtype=np.float32)
-        exp_vals = np.exp(score_vals * 3.0)  # Temperature scaling for crisp confidence
+        # ---------------------------------------------------------
+        # Class 10: MARBLE & GRANITE
+        # ---------------------------------------------------------
+        if contrast > 38 and (r_mean + g_mean + b_mean) > 270 and s_mean < 0.22 and wood_frac < 0.12 and dark_steel_frac < 0.20:
+            scores["Marble"] = max(scores["Marble"], 0.62)
+            scores["Granite"] = max(scores["Granite"], 0.62)
+
+        # ---------------------------------------------------------
+        # Class 11: DOORS
+        # ---------------------------------------------------------
+        if wood_frac > 0.18 and edge_energy > 0.022 and anisotropy > 1.18:
+            scores["Doors"] = max(scores["Doors"], scores["Wood / Timber"] * 0.88)
+
+        # Temperature-scaled Softmax for authoritative probabilities
+        score_vals = np.array([scores[c] for c in self.classes], dtype=np.float32)
+        temperature = 5.2
+        exp_vals = np.exp(score_vals * temperature)
         probs = exp_vals / np.sum(exp_vals)
 
         sorted_indices = np.argsort(probs)[::-1]
@@ -246,7 +394,7 @@ class MaterialClassifier:
             for i in sorted_indices[:4]
         ]
 
-        low_confidence = top_confidence < 0.70
+        low_confidence = top_confidence < 0.65
 
         # Circular economy reuse suggestions based on detected class
         from backend.app.ml.reuse_recommender import get_reuse_recommendations
