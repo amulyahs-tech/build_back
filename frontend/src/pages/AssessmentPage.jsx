@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Camera, Upload, Sparkles, CheckCircle2, AlertTriangle, ArrowRight,
-  DollarSign, Leaf, RefreshCw, Layers, ShieldCheck, MapPin, Search, HelpCircle
+  DollarSign, Leaf, RefreshCw, Layers, ShieldCheck, MapPin, Search, HelpCircle,
+  ShoppingBag, Phone, ExternalLink
 } from 'lucide-react';
 import CameraCaptureModal from '../components/CameraCaptureModal';
 import { api } from '../services/api';
@@ -64,7 +65,8 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
   const [valuationData, setValuationData] = useState(null);
   const [environmentalData, setEnvironmentalData] = useState(null);
   const [similarListings, setSimilarListings] = useState([]);
-  const [activeTab, setActiveTab] = useState('quality'); // 'quality', 'valuation', 'lca', 'similar'
+  const [matchingListings, setMatchingListings] = useState([]);
+  const [activeTab, setActiveTab] = useState('quality'); // 'quality', 'valuation', 'lca', 'sellers', 'similar'
 
   // Photo Capture
   const handlePhotoCaptured = (dataUrl) => {
@@ -140,6 +142,14 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
         console.warn('Visual search fallback:', simErr);
       }
 
+      // 6. Query Active Marketplace Sellers for this Material
+      try {
+        const listings = await api.getListings({ search: cRes.predicted_material });
+        setMatchingListings(listings || []);
+      } catch (marketErr) {
+        console.warn('Marketplace query fallback:', marketErr);
+      }
+
     } catch (err) {
       console.error('AI Assessment failed:', err);
       setErrorMsg(err.message || 'Error executing AI assessment. Please retry or adjust parameters.');
@@ -178,6 +188,11 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
         unit: unit
       });
       setEnvironmentalData(envRes);
+
+      try {
+        const listings = await api.getListings({ search: selectedMaterial });
+        setMatchingListings(listings || []);
+      } catch (e) {}
     } catch (err) {
       console.error('Update failed:', err);
     } finally {
@@ -372,34 +387,60 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
             </div>
           </div>
 
-          {/* Direct CTA: Bridge to Marketplace Selling */}
+          {/* Direct CTAs: Dual Seller & Buyer Workflow Bridges */}
           {classification && (
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-200 text-center space-y-3">
-              <h3 className="text-sm font-bold text-emerald-900">Want to sell this material?</h3>
-              <p className="text-xs text-emerald-700">
-                You can push this assessment directly into the BuildBack Marketplace with pre-filled pricing and quality metrics.
-              </p>
-              <button
-                onClick={() => {
-                  if (onStartListingWithData) {
-                    onStartListingWithData({
-                      material_name: selectedMaterial,
-                      photoDataUrl: photoDataUrl,
-                      qualityData: qualityData,
-                      valuationData: valuationData,
-                      quantity: quantity,
-                      unit: unit,
-                      city: city
-                    });
-                  } else {
-                    onNavigate('sell');
-                  }
-                }}
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2"
-              >
-                <span>List on Marketplace Now</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="space-y-3">
+              {/* Seller Action */}
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-200 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">Seller Action</span>
+                  <h3 className="text-xs font-bold text-emerald-950">Sell This Salvaged Material</h3>
+                </div>
+                <p className="text-[11px] text-emerald-700">
+                  Transfer this AI assessment directly into a live marketplace listing with pre-filled pricing and quality metrics.
+                </p>
+                <button
+                  onClick={() => {
+                    if (onStartListingWithData) {
+                      onStartListingWithData({
+                        material_name: selectedMaterial,
+                        photoDataUrl: photoDataUrl,
+                        qualityData: qualityData,
+                        valuationData: valuationData,
+                        quantity: quantity,
+                        unit: unit,
+                        city: city
+                      });
+                    } else {
+                      onNavigate('sell');
+                    }
+                  }}
+                  className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow transition flex items-center justify-center gap-1.5"
+                >
+                  <span>List on Marketplace as Seller</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Buyer Action */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-200 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 uppercase">Buyer Action</span>
+                  <h3 className="text-xs font-bold text-blue-950">Buy or Source This Material</h3>
+                </div>
+                <p className="text-[11px] text-blue-700">
+                  Inspect verified active sellers offering this material or negotiate custom order quantities across regional cities.
+                </p>
+                <button
+                  onClick={() => {
+                    onNavigate('marketplace');
+                  }}
+                  className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow transition flex items-center justify-center gap-1.5"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>Browse Active Sellers in Marketplace</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -471,11 +512,12 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
               </div>
 
               {/* Navigation Tabs for Diagnostics */}
-              <div className="flex border-b border-gray-200 gap-2">
+              <div className="flex border-b border-gray-200 gap-2 overflow-x-auto">
                 {[
                   { id: 'quality', label: 'Quality & Reuse', icon: ShieldCheck },
                   { id: 'valuation', label: 'AI Valuation', icon: DollarSign },
                   { id: 'lca', label: 'Circular LCA', icon: Leaf },
+                  { id: 'sellers', label: `Active Sellers (${matchingListings.length})`, icon: ShoppingBag },
                   { id: 'similar', label: `Similar Matches (${similarListings.length})`, icon: Layers },
                 ].map((tab) => {
                   const Icon = tab.icon;
@@ -643,7 +685,77 @@ export default function AssessmentPage({ onNavigate, onStartListingWithData }) {
                 </div>
               )}
 
-              {/* TAB 4: VISUAL SIMILARITY MATCHES */}
+              {/* TAB 4: ACTIVE MARKETPLACE SELLERS */}
+              {activeTab === 'sellers' && (
+                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-900">Current Sellers Offering {selectedMaterial || classification.predicted_material}</h3>
+                      <p className="text-xs text-gray-500">Verified regional demolition contractors and circular suppliers.</p>
+                    </div>
+                    <button
+                      onClick={() => onNavigate('marketplace')}
+                      className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                    >
+                      View All in Marketplace <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {matchingListings.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {matchingListings.map((m) => (
+                        <div
+                          key={m.id}
+                          className="p-4 rounded-xl border border-gray-200 hover:border-emerald-400 hover:shadow-sm transition flex flex-col justify-between space-y-3"
+                        >
+                          <div className="flex gap-3 items-start">
+                            <img
+                              src={m.image_url}
+                              alt={m.material_name}
+                              className="w-16 h-16 rounded-lg object-cover bg-gray-100 border"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <h4 className="text-xs font-bold text-gray-900 truncate">{m.material_name}</h4>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                  Grade {m.quality_grade}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 mt-0.5">📍 {m.city}, {m.state}</p>
+                              <p className="text-xs font-extrabold text-emerald-700 mt-1">₹{m.price?.toLocaleString()} <span className="text-[10px] font-normal text-gray-500">({m.quantity} {m.unit})</span></p>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px]">
+                            <span className="text-gray-500">Seller: <b className="text-gray-800">{m.seller_name || 'Verified Demolition Supplier'}</b></span>
+                            <button
+                              onClick={() => {
+                                window.history.pushState({}, '', `/marketplace/${m.id}`);
+                                onNavigate('marketplace');
+                              }}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold"
+                            >
+                              Make Offer →
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center text-gray-500 text-xs space-y-3">
+                      <p>No active marketplace listings currently found for <b>{selectedMaterial || classification.predicted_material}</b>.</p>
+                      <button
+                        onClick={() => onNavigate('marketplace')}
+                        className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-semibold hover:bg-emerald-100"
+                      >
+                        Explore All Materials in Marketplace
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 5: VISUAL SIMILARITY MATCHES */}
               {activeTab === 'similar' && (
                 <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
                   {similarListings.length > 0 ? (
